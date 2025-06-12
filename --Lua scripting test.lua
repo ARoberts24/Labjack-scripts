@@ -1,29 +1,41 @@
---Lua scripting test
-print("We  know how these shake out which is a good start")
---monitor all relevant data and trigger an event 
---Should probs get a list of incoming sensor data but for now we start with one 
---Shoot signal through relay board 
-
---if "sensor" hits "arbitrary number"
---then Flip relay
-
 --[[
-    Name: set_dio_based_on_voltage.lua
-    Desc: This example shows how to set DIO according to an input voltage
-    Note: This example requires firmware 1.0282 (T7) or 1.0023 (T4)
+  Program to trigger relays depending on incoming sensor data. 
+]]
+--[[
+4 solenoids
+3 pressure sensors
+1 thermocouple
 --]]
 
--- Assume the user is using a T7, toggle FIO3
-local outpin = "EIO0"
+-- Assume the user is using T7+RB12+CB37
+
+--------------------------------------
+--Relays assigned to pressure sensors
+local prelay0 = "EIO0"
+local prelay1 = "EIO1"
+local prelay2 = "EIO2"
+--------------------------------------
+--Relay Associated with temperature 
+local Trelay3 = "EIO3"
+--------------------------------------
+local relay4 = "EIO4"
+local relay5 = "EIO5"
+local relay6 = "EIO6"
+local relay7 = "EIO7"
+local relay8 = "CIO0"
+local relay9 = "CIO1"
+local relay10 = "CIO2"
+local relay11 = "CIO3"
+
+
 local devtype = MB.readName("PRODUCT_ID")
 print(devtype)
--- If the user is actually using a T4, toggle FIO5
-if devtype == 4 then
-  --outpin = "FIO5"
-  print("I have no idea how we got here")
-end
+
 local arbitraryValue = 0.000600
-local threshold = arbitraryValue
+local pressure_0_threshold = 0.000600
+local pressure_1_threshold = 0.000600
+local pressure_2_threshold = 0.000600
+local temperature_goal = 174
 -- Configure a 100ms interval
 LJ.IntervalConfig(0, 100)
 
@@ -31,19 +43,66 @@ while true do
   -- If an interval is done
   if LJ.CheckInterval(0) then
     -- Get an input reading
-    local sensIn = MB.readName("AIN6")
-    print("AIN1: ", sensIn, " whatever")
-    -- If vin exceeds the threshold (2.5V)
-    if sensIn > threshold then
+    local pressure_sensor_0 = MB.readName("AIN6")
+    print("AIN6: ", pressure_sensor_0, " whatever")
+    
+    local pressure_sensor_1 = MB.readName("AIN8")
+    print("AIN8: ", pressure_sensor_1, " blamcos")
+    
+    local pressure_sensor_2 = MB.readName("AIN10")
+    print("AIN10: ", pressure_sensor_2, " some unit of pressure I think")
+    
+    local temperature_read = MB.readName("AIN13")
+    print("AIN13: ", temperature_read, " Degrees ")
+    
+    -- If pressures exceed or fall below threshold
+    if pressure_sensor_0 > pressure_0_threshold then
       -- Set outpin high
-      MB.writeName(outpin, 1)
+      MB.writeName(prelay0, 1)
       --print(1, "high")
-      print("triggered higher than threshold")
-    else
+      print("AIN6 triggered HIGHER than threshold")
+    elseif pressure_sensor_0 < pressure_0_threshold then
       -- Set outpin low
-      MB.writeName(outpin, 0)
-     -- print(0, "low")
-     print("triggered lower than threshold")
+      --TRIGGERS RELAY
+      MB.writeName(prelay0, 0)
+     print("AIN6 triggered LOWER than threshold")
     end
+    
+    if pressure_sensor_1 > pressure_1_threshold then
+      -- Set outpin high
+      MB.writeName(prelay1, 1)
+      --print(1, "high")
+      print("AIN8 triggered HIGHER than threshold")
+    elseif pressure_sensor_1 < pressure_1_threshold then
+      -- Set outpin low
+      --TRIGGERS RELAY
+      MB.writeName(prelay1, 0)
+     print("AIN8 triggered LOWER than threshold")
+    end
+    
+    if pressure_sensor_2 > pressure_2_threshold then
+      -- Set outpin high
+      MB.writeName(prelay2, 1)
+      --print(1, "high")
+      print("AIN10 triggered HIGHER than threshold")
+    elseif pressure_sensor_2 < pressure_2_threshold then
+      -- Set outpin low
+      --TRIGGERS RELAY
+      MB.writeName(prelay2, 0)
+     print("AIN10 triggered LOWER than threshold")
+    end
+    -----------------------------------------------
+    --Temperature
+    -----------------------------------------------
+    if temperature_read < temperature_goal then
+      --If not at temp, turn heat on
+      MB.writeName(Trelay3, 0)
+      print("Heating to goal temp")
+    elseif temperature_read >= temperature_goal then
+      --Once at temp turn heat off
+      MB.writeName(Trelay3, 1)
+      print("Goal Temp Reached")
+    end
+    
   end
 end
