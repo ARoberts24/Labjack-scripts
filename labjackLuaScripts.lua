@@ -25,12 +25,12 @@ local relay9 = "CIO1"
 local relay10 = "CIO2"
 local relay11 = "CIO3"
 --------------------------------------
---Sensor Assignments
-Hydrostatic_pressure = MB.readName("AIN10")
-Nitrogen_supply = MB.readName("AIN6")
-Exhaust_pressure = MB.readName("AIN8")
-Bladder_pressure = MB.readName("AIN0")
-temperature_sensor = MB.readName("AIN13")
+--Sensor Baselines
+Hydrostatic_pressure_baseline = MB.readName("AIN10")
+Nitrogen_supply_baseline = MB.readName("AIN6")
+Exhaust_pressure_baseline = MB.readName("AIN8")
+Bladder_pressure_baseline = MB.readName("AIN0")
+temperature_sensor_baseline = MB.readName("AIN13")
 --------------------------------------
 
 local devtype = MB.readName("PRODUCT_ID")
@@ -45,6 +45,11 @@ local exhaust_threshold = 200
 local temperature_threshold = 180
 -- Configure a 100ms interval
 LJ.IntervalConfig(0, 100)
+
+function wait(millisecond)
+    local ostime_vrbl = os.time() + millisecond
+    print( "timing of Lua wait function: ", ostime_vrbl )
+end
 
 MB.writeName(heater_Connection, 0) --Step 4
 
@@ -64,12 +69,7 @@ while at_temp = true do --Step 5
         -- nitrogen supply pressure increases at a certain point it triggers a spike in the bladder pressure when bladder pressure gets to within +- 200psi of nitrogen supply, cut the nitrogen supply
     --Step 7-----------------------
         --wait 3 seconds
-        LJ.IntervalConfig(1,3000)
-        while true do
-            if LJ.CheckInterval(1) not == 3000
-                print("waiting on step 7")
-            elseif LJ.CheckInterval(1) == 3000
-                break 
+    wait(3000)
     --Step 8-----------------------
     MB.writeName(nitorgen_Exhaust, 0)
     --Step 9-----------------------
@@ -79,12 +79,7 @@ while at_temp = true do --Step 5
     end
     --Step 10----------------------
     --wait 3 seconds
-    LJ.IntervalConfig(2,3000)
-    while true do
-        if LJ.CheckInterval(2) not == 3000
-            print("waiting on step 7")
-        elseif LJ.CheckInterval(2) == 3000
-            break 
+    function wait(3000)
     --Step 11----------------------
     --loop
 end
