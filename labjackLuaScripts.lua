@@ -59,22 +59,32 @@ while at_temp = false do
     end
 end
 while at_temp = true do --Step 5
-    if LJ.CheckInterval(0) then 
-        MB.writeName(nitrogen_Relay, 0)
-        --Step 6-----------------------
-            -- nitrogen supply pressure increases at a certain point it triggers a spike in the bladder pressure when bladder pressure gets to within +- 200psi of nitrogen supply, cut the nitrogen supply
-        --Step 7-----------------------
-            --wait 3 seconds
-        --Step 8-----------------------
-        MB.writeName(nitorgen_Exhaust, 0)
-        --Step 9-----------------------
-        --Nitrogen supply will decrease and at a certain point trigger a spike in exhaust pressure when nitrogen supply exceeds 200 psi cut the exhaust 
-        if MB.readName("AIN6") > 200 then
-            MB.writeName(nitorgen_Exhaust, 1)
-        end
-        --Step 10----------------------
+    MB.writeName(nitrogen_Relay, 0)
+    --Step 6-----------------------
+        -- nitrogen supply pressure increases at a certain point it triggers a spike in the bladder pressure when bladder pressure gets to within +- 200psi of nitrogen supply, cut the nitrogen supply
+    --Step 7-----------------------
         --wait 3 seconds
-        --Step 11----------------------
-        --loop
+        LJ.IntervalConfig(1,3000)
+        while true do
+            if LJ.CheckInterval(1) not == 3000
+                print("waiting on step 7")
+            elseif LJ.CheckInterval(1) == 3000
+                break 
+    --Step 8-----------------------
+    MB.writeName(nitorgen_Exhaust, 0)
+    --Step 9-----------------------
+    --Nitrogen supply will decrease and at a certain point trigger a spike in exhaust pressure when nitrogen supply exceeds 200 psi cut the exhaust 
+    if MB.readName("AIN6") > 200 then
+        MB.writeName(nitorgen_Exhaust, 1)
     end
+    --Step 10----------------------
+    --wait 3 seconds
+    LJ.IntervalConfig(2,3000)
+    while true do
+        if LJ.CheckInterval(2) not == 3000
+            print("waiting on step 7")
+        elseif LJ.CheckInterval(2) == 3000
+            break 
+    --Step 11----------------------
+    --loop
 end
