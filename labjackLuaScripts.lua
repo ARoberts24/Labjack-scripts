@@ -67,8 +67,17 @@ while at_temp = true do --Step 5
     MB.writeName(nitrogen_Relay, 0)
     --Step 6-----------------------
         -- nitrogen supply pressure increases at a certain point it triggers a spike in the bladder pressure when bladder pressure gets to within +- 200psi of nitrogen supply, cut the nitrogen supply
-    --Step 7-----------------------
+    local is_it_eq_yet = false
+    while is_it_eq_yet = false do
+        if MB.readName("AIN0") >= MB.readName("AIN6")+200 and MB.readName("AIN0") <= MB.readName("AIN6")-200 then
+            MB.writeName(nitrogen_Relay, 1)
+            is_it_eq_yet = true
+            break
+        end
+    end  
+        --Step 7-----------------------
         --wait 3 seconds
+        --Maybe use LJ.Tick? probs have to do something funky there 
     wait(3000)
     --Step 8-----------------------
     MB.writeName(nitorgen_Exhaust, 0)
