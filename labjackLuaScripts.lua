@@ -26,12 +26,11 @@ local relay10 = "CIO2"
 local relay11 = "CIO3"
 --------------------------------------
 --Sensor Baselines
-Hydrostatic_pressure_baseline = MB.readName("AIN10")
-Nitrogen_supply_baseline = MB.readName("AIN6")
-Exhaust_pressure_baseline = MB.readName("AIN8")
-Bladder_pressure_baseline = MB.readName("AIN0")
-temperature_sensor_baseline = MB.readName("AIN13")
---------------------------------------
+Hydrostatic_pressure_baseline = (MB.readName("AIN10")  * 2798)-2456
+Nitrogen_supply_baseline      = (MB.readName("AIN6")   * 2798)-2456
+Exhaust_pressure_baseline     = (MB.readName("AIN8")   * 2798)-2456
+Bladder_pressure_baseline     = (MB.readName("AIN0")   * 2798)-2456
+temperature_sensor_baseline   = (MB.readName("AIN13")  * 2798)-2456
 
 local devtype = MB.readName("PRODUCT_ID")
 print(devtype)
@@ -45,30 +44,26 @@ local exhaust_threshold = 200
 local temperature_threshold = 180
 -- Configure a 100ms interval
 LJ.IntervalConfig(0, 100)
-
-function wait(millisecond)
-    local ostime_vrbl = os.time() + millisecond
-    print( "timing of Lua wait function: ", ostime_vrbl )
-end
+LJ.IntervalConfig(1,3000)
 
 MB.writeName(heater_Connection, 0) --Step 4
 
-while at_temp = false do
+while at_temp == false do
     if LJ.CheckInterval(0) then
-        if temperature_sensor >= temperature_threshold then
+        if MB.readName("AIN13")>= temperature_threshold then
             at_temp = true 
             MB.writeName(heater_Connection, 1)
         else
-            print("Current Temp: ", temperature_sensor, " F")
+            print("Current Temp: ", (MB.readName("AIN13") * 2798)-2456, " F")
         end
     end
 end
-while at_temp = true do --Step 5
+while at_temp == true do --Step 5
     MB.writeName(nitrogen_Relay, 0)
     --Step 6-----------------------
         -- nitrogen supply pressure increases at a certain point it triggers a spike in the bladder pressure when bladder pressure gets to within +- 200psi of nitrogen supply, cut the nitrogen supply
     local is_it_eq_yet = false
-    while is_it_eq_yet = false do
+    while is_it_eq_yet == false do
         if MB.readName("AIN0") >= MB.readName("AIN6")+200 and MB.readName("AIN0") <= MB.readName("AIN6")-200 then
             MB.writeName(nitrogen_Relay, 1)
             is_it_eq_yet = true
@@ -77,8 +72,12 @@ while at_temp = true do --Step 5
     end  
         --Step 7-----------------------
         --wait 3 seconds
-        --Maybe use LJ.Tick? probs have to do something funky there 
-    wait(3000)
+        while true do
+            if LJ.CheckInterval(1) then
+              print("Wait is done")
+              break
+            end
+          end
     --Step 8-----------------------
     MB.writeName(nitorgen_Exhaust, 0)
     --Step 9-----------------------
@@ -88,7 +87,12 @@ while at_temp = true do --Step 5
     end
     --Step 10----------------------
     --wait 3 seconds
-    function wait(3000)
+    while true do
+        if LJ.CheckInterval(1) then
+          print("Looping Program")
+          break
+        end
+      end
     --Step 11----------------------
     --loop
 end
