@@ -13,7 +13,7 @@ repeat loop
 --------------------------------------
 --Relay assignments
 local nitrogen_Relay = "EIO0"
-local nitorgen_Exhaust = "EIO1"
+local nitrogen_Exhaust = "EIO1"
 local heater_Connection = "EIO2"
 local relay3 = "EIO3"
 local relay4 = "EIO4"
@@ -26,12 +26,11 @@ local relay10 = "CIO2"
 local relay11 = "CIO3"
 --------------------------------------
 --Sensor Baselines
-Hydrostatic_pressure_baseline = MB.readName("AIN10")
-Nitrogen_supply_baseline = MB.readName("AIN6")
-Exhaust_pressure_baseline = MB.readName("AIN8")
-Bladder_pressure_baseline = MB.readName("AIN0")
-temperature_sensor_baseline = MB.readName("AIN13")
---------------------------------------
+Hydrostatic_pressure_baseline = (MB.readName("AIN10")  * 2798)-2456
+Nitrogen_supply_baseline      = (MB.readName("AIN6")   * 2798)-2456
+Exhaust_pressure_baseline     = (MB.readName("AIN8")   * 2798)-2456
+Bladder_pressure_baseline     = (MB.readName("AIN0")   * 2798)-2456
+temperature_sensor_baseline   = (MB.readName("AIN13")  * 2798)-2456
 
 local devtype = MB.readName("PRODUCT_ID")
 print(devtype)
@@ -43,30 +42,43 @@ print(devtype)
 local exhaust_threshold = 200
 --local bladder_threshold = 0.000600
 local temperature_threshold = 180
--- Configure a 100ms interval
+
+-- Configure a timing intervals
 LJ.IntervalConfig(0, 100)
 LJ.IntervalConfig(1,3000)
 
-MB.writeName(heater_Connection, 0) --Step 4
+--Shut All Relays 
+MB.writeName(heater_Connection, 1)
+MB.writeName(nitrogen_Relay,    1)
+MB.writeName(nitrogen_Exhaust,  1)
+--------------------------------------
 
+MB.writeName(heater_Connection, 0) --Step 4
+print("Checking temp")
+local at_temp = false
 while at_temp == false do
     if LJ.CheckInterval(0) then
-        if temperature_sensor >= temperature_threshold then
+        if ((MB.readName("AIN13") * 2798)-2456)>= temperature_threshold then
             at_temp = true 
             MB.writeName(heater_Connection, 1)
+            print("TEMP DEBUG")
+            break
         else
-            print("Current Temp: ", temperature_sensor, " F")
+            print("Current Temp: ", (MB.readName("AIN13") * 2798)-2456, " F")
         end
     end
 end
+print("LINE 64 DEBUG")
 while at_temp == true do --Step 5
     MB.writeName(nitrogen_Relay, 0)
     --Step 6-----------------------
         -- nitrogen supply pressure increases at a certain point it triggers a spike in the bladder pressure when bladder pressure gets to within +- 200psi of nitrogen supply, cut the nitrogen supply
+        print("LINE 69 DEBUG nice")
     local is_it_eq_yet = false
     while is_it_eq_yet == false do
-        if MB.readName("AIN0") >= MB.readName("AIN6")+200 and MB.readName("AIN0") <= MB.readName("AIN6")-200 then
+        if MB.readName("AIN0") >= ((MB.readName("AIN6")  * 2798)-2456)+200 and (MB.readName("AIN0")  * 2798)-2456 <= ((MB.readName("AIN6")  * 2798)-2456)-200 then
             MB.writeName(nitrogen_Relay, 1)
+            print("Triggered Step 6")
             is_it_eq_yet = true
             break
         end
@@ -75,22 +87,23 @@ while at_temp == true do --Step 5
         --wait 3 seconds
         while true do
             if LJ.CheckInterval(1) then
-              print("Wait is done")
+              print(" Step 7 Wait is done")
               break
             end
           end
     --Step 8-----------------------
-    MB.writeName(nitorgen_Exhaust, 0)
+    MB.writeName(nitrogen_Exhaust, 0)
     --Step 9-----------------------
     --Nitrogen supply will decrease and at a certain point trigger a spike in exhaust pressure when nitrogen supply exceeds 200 psi cut the exhaust 
-    if MB.readName("AIN6") > 200 then
-        MB.writeName(nitorgen_Exhaust, 1)
+    if ((MB.readName("AIN6")  * 2798)-2456) > 200 then
+        MB.writeName(nitrogen_Exhaust, 1)
+        print("Triggered Step 9")
     end
     --Step 10----------------------
     --wait 3 seconds
     while true do
         if LJ.CheckInterval(1) then
-          print("Looping Program")
+          print("Step 10 wait is done looping")
           break
         end
       end

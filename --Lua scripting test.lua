@@ -1,11 +1,6 @@
 --[[
   Program to trigger relays depending on incoming sensor data. 
 ]]
---[[
-4 solenoids
-3 pressure sensors
-1 thermocouple
---]]
 
 -- Assume the user is using T7+RB12+CB37
 
